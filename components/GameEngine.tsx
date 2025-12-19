@@ -12,6 +12,7 @@ interface GameEngineProps {
 }
 
 const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, onExit }) => {
+  const [hasStarted, setHasStarted] = useState(false);
   const [levelIdx, setLevelIdx] = useState(startLevelIndex);
   const [question, setQuestion] = useState<{ a: number, b: number, type: GameType } | null>(null);
   const [options, setOptions] = useState<number[]>([]);
@@ -59,10 +60,11 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
     setOptions(Array.from(distractors).sort((x, y) => x - y));
     setFeedback(null);
 
-    if (config.tts && !isMuted) {
+    // Chỉ đọc khi game đã thực sự bắt đầu
+    if (hasStarted && config.tts && !isMuted) {
       let speechText = "";
       if (type === GameType.COUNT) {
-        speechText = `Bé hãy đếm xem có bao nhiêu ${theme.itemImage} nhé?`;
+        speechText = `Bé hãy đếm xem có bao nhiêu ${config.icon || 'vật phẩm'} nhé?`;
       } else if (type === GameType.ADD) {
         speechText = `${a} cộng ${b} bằng mấy nhỉ?`;
       } else if (type === GameType.SUB) {
@@ -70,14 +72,21 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
       }
       audio.speak(speechText);
     }
-  }, [config, currentLevel, isMuted, audio, theme.itemImage]);
+  }, [config, currentLevel, isMuted, audio, hasStarted]);
 
   useEffect(() => {
-    generateQuestion();
-  }, [generateQuestion]);
+    if (hasStarted) {
+      generateQuestion();
+    }
+  }, [hasStarted, generateQuestion]);
+
+  const handleStartGame = () => {
+    audio.ensureAudioContext();
+    setHasStarted(true);
+  };
 
   const handleAnswer = (val: number) => {
-    audio.ensureAudioContext(); // Đảm bảo audio context được kích hoạt khi chạm
+    audio.ensureAudioContext();
     if (!question || feedback) return;
     
     const actualAnswer = question.type === GameType.COUNT ? question.a : (question.type === GameType.ADD ? question.a + question.b : question.a - question.b);
@@ -97,11 +106,29 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
     }
   };
 
+  if (!hasStarted) {
+    return (
+      <div className={`fixed inset-0 z-[60] flex items-center justify-center ${theme.background}`}>
+        <div className="bg-white p-10 rounded-[3rem] shadow-2xl text-center border-8 border-white">
+          <div className="text-8xl mb-6 floating">{config.icon}</div>
+          <h2 className="text-4xl font-black mb-4 text-slate-800">{config.title}</h2>
+          <p className="text-slate-500 mb-8 font-bold">{config.subtitle}</p>
+          <button 
+            onClick={handleStartGame}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white text-3xl font-black px-12 py-6 rounded-3xl shadow-xl hover:scale-105 active:scale-95 transition-all border-b-8 border-emerald-700"
+          >
+            SẴN SÀNG! 🚀
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!question) return null;
 
   return (
     <div className={`fixed inset-0 z-50 flex flex-col ${theme.background} overflow-hidden`}>
-      {/* HUD bar - Tối ưu cho mobile */}
+      {/* HUD bar */}
       <div className="p-3 md:p-4 flex justify-between items-center z-20 bg-white/50 backdrop-blur-sm">
         <div className="flex gap-2">
           <button 
@@ -156,7 +183,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
             </h2>
           </div>
 
-          {/* Items Grid - Tự động co giãn cho mobile */}
+          {/* Items Grid */}
           <div className="flex-1 flex items-center justify-center min-h-[140px] md:min-h-[220px] bg-slate-50/50 rounded-2xl md:rounded-[2rem] p-3 md:p-6 mb-6">
             {question.type === GameType.COUNT && (
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 md:gap-4">
@@ -191,7 +218,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
             )}
           </div>
 
-          {/* Answer Buttons - To và dễ bấm */}
+          {/* Answer Buttons */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {options.map((opt) => (
               <button
@@ -205,11 +232,6 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
             ))}
           </div>
         </div>
-        
-        {/* Caption */}
-        <p className="mt-4 md:mt-8 text-sm md:text-xl text-slate-500 font-bold bg-white/50 px-4 md:px-8 py-2 md:py-3 rounded-full text-center">
-          {config.subtitle}
-        </p>
       </div>
     </div>
   );

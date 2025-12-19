@@ -4,20 +4,9 @@ import { GoogleGenAI, Modality } from "@google/genai";
 export class AudioCore {
   constructor() {
     this.audioCtx = null;
-    this.ai = null;
     this.isMuted = false;
-    this.initAI();
-  }
-
-  initAI() {
-    try {
-      const apiKey = window.process?.env?.API_KEY || "";
-      if (apiKey) {
-        this.ai = new GoogleGenAI({ apiKey });
-      }
-    } catch (e) {
-      console.error("AudioCore Init AI Error:", e);
-    }
+    // Khởi tạo AI trực tiếp từ process.env.API_KEY theo hướng dẫn
+    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   }
 
   ensureAudioContext() {
@@ -27,36 +16,34 @@ export class AudioCore {
     if (this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
+    return this.audioCtx;
   }
 
   setMute(mute) {
     this.isMuted = mute;
   }
 
-  // Tạo âm thanh bằng Oscillator (không cần file mp3)
   async playSfx(type) {
     if (this.isMuted) return;
-    this.ensureAudioContext();
+    const ctx = this.ensureAudioContext();
     
-    const osc = this.audioCtx.createOscillator();
-    const gain = this.audioCtx.createGain();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     
     osc.connect(gain);
-    gain.connect(this.audioCtx.destination);
+    gain.connect(ctx.destination);
 
-    const now = this.audioCtx.currentTime;
+    const now = ctx.currentTime;
 
     if (type === 'correct') {
-      // Âm thanh "tinh tinh" cao dần
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
+      osc.frequency.setValueAtTime(523.25, now); 
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); 
       gain.gain.setValueAtTime(0.1, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
       osc.start(now);
       osc.stop(now + 0.3);
     } else if (type === 'wrong') {
-      // Âm thanh "tè tè" trầm
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(150, now);
       osc.frequency.linearRampToValueAtTime(100, now + 0.2);
@@ -71,13 +58,13 @@ export class AudioCore {
     if (this.isMuted || !this.ai) return;
 
     try {
-      this.ensureAudioContext();
+      const ctx = this.ensureAudioContext();
 
       const response = await this.ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ 
           parts: [{ 
-            text: `Bạn là cô giáo mầm non. Hãy đọc chậm, rõ ràng câu hỏi: ${text}` 
+            text: `Bạn là cô giáo mầm non dạy toán. Hãy đọc chậm, rõ ràng, khích lệ: ${text}` 
           }] 
         }],
         config: {
@@ -92,18 +79,18 @@ export class AudioCore {
 
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
-        const audioBuffer = await this.decodeAudioData(this.base64ToUint8(base64Audio));
-        const source = this.audioCtx.createBufferSource();
+        const audioBuffer = await this.decodeAudioData(this.decodeBase64(base64Audio), ctx);
+        const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
-        source.connect(this.audioCtx.destination);
+        source.connect(ctx.destination);
         source.start();
       }
     } catch (error) {
-      console.error("AudioCore Speak Error:", error);
+      console.error("AudioCore TTS Error:", error);
     }
   }
 
-  base64ToUint8(base64) {
+  decodeBase64(base64) {
     const binaryString = atob(base64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
@@ -112,10 +99,11 @@ export class AudioCore {
     return bytes;
   }
 
-  async decodeAudioData(data) {
+  async decodeAudioData(data, ctx) {
+    // API trả về raw PCM 16-bit mono 24kHz
     const dataInt16 = new Int16Array(data.buffer);
     const frameCount = dataInt16.length;
-    const buffer = this.audioCtx.createBuffer(1, frameCount, 24000);
+    const buffer = ctx.createBuffer(1, frameCount, 24000);
     const channelData = buffer.getChannelData(0);
     for (let i = 0; i < frameCount; i++) {
       channelData[i] = dataInt16[i] / 32768.0;
