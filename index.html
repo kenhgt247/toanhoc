@@ -16,6 +16,7 @@
             margin: 0;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            touch-action: manipulation;
         }
         .game-font {
             font-family: 'Chakra Petch', sans-serif;
@@ -28,8 +29,11 @@
         .floating {
             animation: float 3s ease-in-out infinite;
         }
-        button {
-            touch-action: manipulation;
+        /* Mobile specific adjustments */
+        @media (max-width: 640px) {
+            .play-area {
+                padding: 1.5rem;
+            }
         }
     </style>
     <script type="importmap">

@@ -5,8 +5,16 @@ export class AudioCore {
   constructor() {
     this.audioCtx = null;
     this.isMuted = false;
-    // Khởi tạo AI trực tiếp từ process.env.API_KEY theo hướng dẫn
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    this.ai = null;
+    
+    // Lazy init AI to prevent crashes if API_KEY is missing during boot
+    try {
+      if (process.env.API_KEY) {
+        this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      }
+    } catch (e) {
+      console.warn("AI initialization skipped or failed:", e);
+    }
   }
 
   ensureAudioContext() {
@@ -64,7 +72,7 @@ export class AudioCore {
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ 
           parts: [{ 
-            text: `Bạn là cô giáo mầm non dạy toán. Hãy đọc chậm, rõ ràng, khích lệ: ${text}` 
+            text: `Bạn là cô giáo mầm non vui vẻ. Hãy đọc to, rõ câu hỏi toán học này cho bé: ${text}` 
           }] 
         }],
         config: {
@@ -79,7 +87,7 @@ export class AudioCore {
 
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (base64Audio) {
-        const audioBuffer = await this.decodeAudioData(this.decodeBase64(base64Audio), ctx);
+        const audioBuffer = await this.decodeAudioData(this.decode(base64Audio), ctx);
         const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(ctx.destination);
@@ -90,17 +98,18 @@ export class AudioCore {
     }
   }
 
-  decodeBase64(base64) {
+  decode(base64) {
     const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes;
   }
 
   async decodeAudioData(data, ctx) {
-    // API trả về raw PCM 16-bit mono 24kHz
+    // API returns raw 16-bit PCM mono at 24kHz
     const dataInt16 = new Int16Array(data.buffer);
     const frameCount = dataInt16.length;
     const buffer = ctx.createBuffer(1, frameCount, 24000);

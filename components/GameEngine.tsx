@@ -60,15 +60,14 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
     setOptions(Array.from(distractors).sort((x, y) => x - y));
     setFeedback(null);
 
-    // Chỉ đọc khi game đã thực sự bắt đầu
     if (hasStarted && config.tts && !isMuted) {
       let speechText = "";
       if (type === GameType.COUNT) {
-        speechText = `Bé hãy đếm xem có bao nhiêu ${config.icon || 'vật phẩm'} nhé?`;
+        speechText = `Bé hãy đếm xem có bao nhiêu ${config.icon || 'vật phẩm'}?`;
       } else if (type === GameType.ADD) {
-        speechText = `${a} cộng ${b} bằng mấy nhỉ?`;
+        speechText = `${a} cộng ${b} bằng mấy?`;
       } else if (type === GameType.SUB) {
-        speechText = `${a} trừ ${b} bằng bao nhiêu?`;
+        speechText = `${a} trừ ${b} bằng mấy?`;
       }
       audio.speak(speechText);
     }
@@ -108,16 +107,16 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
 
   if (!hasStarted) {
     return (
-      <div className={`fixed inset-0 z-[60] flex items-center justify-center ${theme.background}`}>
-        <div className="bg-white p-10 rounded-[3rem] shadow-2xl text-center border-8 border-white">
-          <div className="text-8xl mb-6 floating">{config.icon}</div>
-          <h2 className="text-4xl font-black mb-4 text-slate-800">{config.title}</h2>
-          <p className="text-slate-500 mb-8 font-bold">{config.subtitle}</p>
+      <div className={`fixed inset-0 z-[60] flex items-center justify-center ${theme.background} p-4`}>
+        <div className="bg-white p-6 md:p-12 rounded-[2rem] md:rounded-[3rem] shadow-2xl text-center border-4 md:border-8 border-white w-full max-w-md">
+          <div className="text-6xl md:text-8xl mb-4 md:mb-6 floating">{config.icon}</div>
+          <h2 className="text-2xl md:text-4xl font-black mb-2 md:mb-4 text-slate-800">{config.title}</h2>
+          <p className="text-slate-500 mb-6 md:mb-10 font-bold text-sm md:text-base">{config.subtitle}</p>
           <button 
             onClick={handleStartGame}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white text-3xl font-black px-12 py-6 rounded-3xl shadow-xl hover:scale-105 active:scale-95 transition-all border-b-8 border-emerald-700"
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xl md:text-3xl font-black px-8 py-4 md:py-6 rounded-2xl md:rounded-3xl shadow-xl hover:scale-105 active:scale-95 transition-all border-b-4 md:border-b-8 border-emerald-700"
           >
-            SẴN SÀNG! 🚀
+            BẮT ĐẦU! 🚀
           </button>
         </div>
       </div>
@@ -129,66 +128,66 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
   return (
     <div className={`fixed inset-0 z-50 flex flex-col ${theme.background} overflow-hidden`}>
       {/* HUD bar */}
-      <div className="p-3 md:p-4 flex justify-between items-center z-20 bg-white/50 backdrop-blur-sm">
+      <div className="p-2 md:p-4 flex justify-between items-center z-20 bg-white/70 backdrop-blur-sm border-b-2 border-slate-200/30">
         <div className="flex gap-2">
           <button 
             onClick={onExit} 
-            className="bg-white hover:bg-slate-50 p-2 md:p-3 rounded-xl shadow text-lg md:text-2xl border-b-4 border-slate-200 active:translate-y-1 transition-all"
+            className="bg-white hover:bg-slate-50 p-2 md:p-3 rounded-xl shadow text-xl md:text-2xl border-b-4 border-slate-200 active:translate-y-1 transition-all"
           >
             🏠
           </button>
           <button 
             onClick={() => setIsMuted(!isMuted)} 
-            className="bg-white hover:bg-slate-50 p-2 md:p-3 rounded-xl shadow text-lg md:text-2xl border-b-4 border-slate-200 active:translate-y-1 transition-all"
+            className="bg-white hover:bg-slate-50 p-2 md:p-3 rounded-xl shadow text-xl md:text-2xl border-b-4 border-slate-200 active:translate-y-1 transition-all"
           >
             {isMuted ? '🔇' : '🔊'}
           </button>
         </div>
         <div className="flex gap-2 md:gap-4">
-          <div className="bg-white/90 px-3 md:px-6 py-1 md:py-2 rounded-xl shadow-lg font-black text-emerald-600 border-b-4 border-slate-200 text-sm md:text-base">
+          <div className="bg-white/90 px-3 md:px-6 py-1 md:py-2 rounded-xl shadow-sm font-black text-emerald-600 border-b-4 border-slate-200 text-xs md:text-sm">
             Cấp: {levelIdx + 1}
           </div>
-          <div className="bg-white/90 px-3 md:px-6 py-1 md:py-2 rounded-xl shadow-lg font-black text-orange-500 border-b-4 border-slate-200 text-sm md:text-base">
+          <div className="bg-white/90 px-3 md:px-6 py-1 md:py-2 rounded-xl shadow-sm font-black text-orange-500 border-b-4 border-slate-200 text-xs md:text-sm">
             Điểm: {score}
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-6 overflow-y-auto">
-        <div className="w-full max-w-2xl bg-white rounded-[2rem] md:rounded-[3rem] p-4 md:p-8 shadow-2xl relative flex flex-col border-4 md:border-8 border-white/50">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto">
+        <div className="w-full max-w-2xl bg-white rounded-[2rem] md:rounded-[3rem] p-4 md:p-8 shadow-2xl relative flex flex-col border-4 md:border-8 border-white/50 min-h-[500px] md:min-h-0">
           
           {/* Feedback Overlay */}
           {feedback === 'correct' && (
-            <div className="absolute inset-0 z-30 bg-emerald-500/90 flex items-center justify-center rounded-[2rem] md:rounded-[3rem] animate-in fade-in zoom-in duration-300">
+            <div className="absolute inset-0 z-30 bg-emerald-500/95 flex items-center justify-center rounded-[2rem] md:rounded-[3rem] animate-in fade-in zoom-in duration-300">
               <div className="text-center">
-                <span className="text-6xl md:text-8xl block mb-2">🌟</span>
-                <span className="text-3xl md:text-5xl font-black text-white uppercase">Giỏi Lắm!</span>
+                <span className="text-7xl md:text-9xl block mb-2">🌟</span>
+                <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-wider">Giỏi Lắm!</span>
               </div>
             </div>
           )}
           {feedback === 'wrong' && (
-            <div className="absolute inset-0 z-30 bg-rose-500/90 flex items-center justify-center rounded-[2rem] md:rounded-[3rem] animate-in fade-in zoom-in duration-200">
+            <div className="absolute inset-0 z-30 bg-rose-500/95 flex items-center justify-center rounded-[2rem] md:rounded-[3rem] animate-in fade-in zoom-in duration-200">
               <div className="text-center">
-                <span className="text-6xl md:text-8xl block mb-2">❌</span>
-                <span className="text-3xl md:text-5xl font-black text-white uppercase">Thử Lại!</span>
+                <span className="text-7xl md:text-9xl block mb-2">❌</span>
+                <span className="text-4xl md:text-6xl font-black text-white uppercase tracking-wider">Thử Lại!</span>
               </div>
             </div>
           )}
 
-          {/* Question Display */}
+          {/* Question Header */}
           <div className="text-center mb-4 md:mb-8">
-            <h2 className={`text-xl md:text-3xl font-black ${theme.accent} game-font`}>
+            <h2 className={`text-2xl md:text-4xl font-black ${theme.accent} game-font uppercase tracking-tight`}>
               {question.type === GameType.COUNT ? 'Bé hãy đếm nhé!' : 
-               question.type === GameType.ADD ? 'Phép tính cộng' : 'Phép tính trừ'}
+               question.type === GameType.ADD ? 'Làm phép cộng' : 'Làm phép trừ'}
             </h2>
           </div>
 
-          {/* Items Grid */}
-          <div className="flex-1 flex items-center justify-center min-h-[140px] md:min-h-[220px] bg-slate-50/50 rounded-2xl md:rounded-[2rem] p-3 md:p-6 mb-6">
+          {/* Items Visualization Area */}
+          <div className="flex-1 flex items-center justify-center min-h-[200px] md:min-h-[300px] bg-slate-50/50 rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 mb-6 border-2 border-dashed border-slate-200">
             {question.type === GameType.COUNT && (
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 md:gap-4">
+              <div className="grid grid-cols-5 gap-3 md:gap-6">
                 {Array.from({ length: question.a }).map((_, i) => (
-                  <span key={i} className="text-4xl md:text-6xl floating" style={{ animationDelay: `${i * 0.1}s` }}>
+                  <span key={i} className="text-4xl md:text-7xl floating" style={{ animationDelay: `${i * 0.1}s` }}>
                     {theme.itemImage}
                   </span>
                 ))}
@@ -196,21 +195,21 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
             )}
             
             {question.type === GameType.ADD && (
-              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6">
-                <div className="flex flex-wrap justify-center gap-1 md:gap-2 max-w-[120px] md:max-w-[180px]">
-                   {Array.from({ length: question.a }).map((_, i) => <span key={i} className="text-3xl md:text-5xl">{theme.itemImage}</span>)}
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10">
+                <div className="flex flex-wrap justify-center gap-2 max-w-[150px] md:max-w-[200px]">
+                   {Array.from({ length: question.a }).map((_, i) => <span key={i} className="text-4xl md:text-6xl">{theme.itemImage}</span>)}
                 </div>
-                <span className="text-4xl md:text-6xl font-black text-slate-300">+</span>
-                <div className="flex flex-wrap justify-center gap-1 md:gap-2 max-w-[120px] md:max-w-[180px]">
-                   {Array.from({ length: question.b }).map((_, i) => <span key={i} className="text-3xl md:text-5xl">{theme.itemImage}</span>)}
+                <span className="text-5xl md:text-8xl font-black text-slate-300">+</span>
+                <div className="flex flex-wrap justify-center gap-2 max-w-[150px] md:max-w-[200px]">
+                   {Array.from({ length: question.b }).map((_, i) => <span key={i} className="text-4xl md:text-6xl">{theme.itemImage}</span>)}
                 </div>
               </div>
             )}
 
             {question.type === GameType.SUB && (
-              <div className="flex flex-wrap justify-center gap-2 md:gap-4 max-w-full">
+              <div className="flex flex-wrap justify-center gap-3 md:gap-6 max-w-full">
                  {Array.from({ length: question.a }).map((_, i) => (
-                   <span key={i} className={`text-4xl md:text-6xl transition-all duration-500 ${i >= (question.a - question.b) ? 'opacity-10 scale-50 grayscale blur-[1px]' : 'floating'}`}>
+                   <span key={i} className={`text-4xl md:text-7xl transition-all duration-700 ${i >= (question.a - question.b) ? 'opacity-5 scale-50 grayscale blur-[2px] rotate-45' : 'floating'}`}>
                      {theme.itemImage}
                    </span>
                  ))}
@@ -218,14 +217,13 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
             )}
           </div>
 
-          {/* Answer Buttons */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {/* Answer Choice Buttons */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {options.map((opt) => (
               <button
                 key={opt}
                 onClick={() => handleAnswer(opt)}
-                style={{ touchAction: 'manipulation' }}
-                className="bg-slate-100 hover:bg-emerald-50 active:scale-95 border-b-8 md:border-b-[12px] border-slate-200 hover:border-emerald-400 transition-all py-4 md:py-8 rounded-xl md:rounded-[2rem] text-4xl md:text-6xl font-black text-slate-700 shadow-sm"
+                className="bg-slate-50 hover:bg-emerald-50 active:scale-90 border-b-8 md:border-b-[14px] border-slate-200 hover:border-emerald-400 transition-all py-6 md:py-10 rounded-2xl md:rounded-[2.5rem] text-4xl md:text-7xl font-black text-slate-700 shadow-md"
               >
                 {opt}
               </button>
