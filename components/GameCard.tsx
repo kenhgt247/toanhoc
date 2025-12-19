@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { GameConfig } from '../types';
+import { GameConfig } from '../types.ts';
 
 interface GameCardProps {
   game: GameConfig;
@@ -11,7 +11,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
   return (
     <button
       onClick={() => onClick(game)}
-      className="group relative bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-2 border-4 border-transparent hover:border-emerald-400 text-left overflow-hidden"
+      className="group relative bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-2 border-4 border-transparent hover:border-emerald-400 text-left overflow-hidden w-full"
     >
       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
         <span className="text-8xl">{game.icon}</span>
@@ -21,8 +21,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
         <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-4xl mb-4 group-hover:bg-emerald-100 transition-colors">
           {game.icon}
         </div>
-        <h3 className="text-xl font-black text-slate-800 mb-1">{game.title}</h3>
-        <p className="text-sm text-slate-500 font-medium">{game.subtitle}</p>
+        <h3 className="text-xl font-black text-slate-800 mb-1 leading-tight">{game.title}</h3>
+        <p className="text-sm text-slate-500 font-medium line-clamp-2">{game.subtitle}</p>
         
         <div className="mt-4 flex gap-2">
           <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${
@@ -31,7 +31,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
             game.type === 'SUB' ? 'bg-red-100 text-red-600' :
             'bg-purple-100 text-purple-600'
           }`}>
-            {game.type === 'COUNT' ? 'Đếm' : game.type === 'ADD' ? 'Phép Cộng' : game.type === 'SUB' ? 'Phép Trừ' : 'Hỗn Hợp'}
+            {game.type === 'COUNT' ? 'Đếm' : game.type === 'ADD' ? 'Cộng' : game.type === 'SUB' ? 'Trừ' : 'Hỗn Hợp'}
           </span>
         </div>
       </div>

@@ -4,7 +4,13 @@ import { GoogleGenAI, Modality } from "@google/genai";
 export class AudioCore {
   constructor() {
     this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Đảm bảo process.env tồn tại trước khi truy cập
+    const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
+    if (apiKey) {
+      this.ai = new GoogleGenAI({ apiKey: apiKey });
+    } else {
+      console.warn("API Key không tìm thấy. TTS sẽ bị vô hiệu hóa.");
+    }
     this.isMuted = false;
   }
 
@@ -14,15 +20,14 @@ export class AudioCore {
 
   async playSfx(type) {
     if (this.isMuted) return;
-    console.log(`Playing SFX: ${type}`);
-    // Có thể thêm logic phát âm thanh bíp đơn giản nếu không có file mp3
+    // Phát âm thanh chúc mừng bằng thư viện confetti đã load trong index.html
+    console.log(`SFX: ${type}`);
   }
 
   async speak(text) {
-    if (this.isMuted) return;
+    if (this.isMuted || !this.ai) return;
 
     try {
-      // Đảm bảo AudioContext hoạt động (vượt rào cản autoplay của trình duyệt)
       if (this.audioCtx.state === 'suspended') {
         await this.audioCtx.resume();
       }
@@ -31,14 +36,14 @@ export class AudioCore {
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ 
           parts: [{ 
-            text: `Bạn là giáo viên mầm non vui vẻ. Hãy đọc to và rõ ràng câu hỏi toán học sau cho trẻ em: ${text}` 
+            text: `Bạn là cô giáo mầm non. Hãy đọc chậm, rõ ràng câu hỏi: ${text}` 
           }] 
         }],
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' }, // Giọng nữ nhẹ nhàng
+              prebuiltVoiceConfig: { voiceName: 'Kore' },
             },
           },
         },
@@ -53,7 +58,7 @@ export class AudioCore {
         source.start();
       }
     } catch (error) {
-      console.warn("TTS Error (Check API Key or Connectivity):", error);
+      console.error("Lỗi phát âm thanh:", error);
     }
   }
 

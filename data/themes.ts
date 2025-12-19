@@ -1,5 +1,5 @@
 
-import { ThemeConfig } from '../types';
+import { ThemeConfig } from '../types.ts';
 
 export const themes: Record<string, ThemeConfig> = {
   fruit: {
@@ -13,7 +13,7 @@ export const themes: Record<string, ThemeConfig> = {
     background: 'bg-amber-50',
     primary: 'bg-amber-500',
     secondary: 'bg-amber-100',
-    accent: 'text-brown-700',
+    accent: 'text-orange-600',
     itemImage: '🐰'
   },
   space: {
