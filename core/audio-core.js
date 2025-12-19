@@ -5,24 +5,40 @@ export class AudioCore {
   constructor() {
     this.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
     this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    this.isMuted = false;
+  }
+
+  setMute(mute) {
+    this.isMuted = mute;
   }
 
   async playSfx(type) {
-    // In a production app, these would be local files. 
-    // Here we'll simulate or log if files aren't physically present.
+    if (this.isMuted) return;
     console.log(`Playing SFX: ${type}`);
+    // Có thể thêm logic phát âm thanh bíp đơn giản nếu không có file mp3
   }
 
   async speak(text) {
+    if (this.isMuted) return;
+
     try {
+      // Đảm bảo AudioContext hoạt động (vượt rào cản autoplay của trình duyệt)
+      if (this.audioCtx.state === 'suspended') {
+        await this.audioCtx.resume();
+      }
+
       const response = await this.ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text: `Đọc to bằng tiếng Việt: ${text}` }] }],
+        contents: [{ 
+          parts: [{ 
+            text: `Bạn là giáo viên mầm non vui vẻ. Hãy đọc to và rõ ràng câu hỏi toán học sau cho trẻ em: ${text}` 
+          }] 
+        }],
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' },
+              prebuiltVoiceConfig: { voiceName: 'Kore' }, // Giọng nữ nhẹ nhàng
             },
           },
         },
@@ -37,7 +53,7 @@ export class AudioCore {
         source.start();
       }
     } catch (error) {
-      console.error("TTS Error:", error);
+      console.warn("TTS Error (Check API Key or Connectivity):", error);
     }
   }
 

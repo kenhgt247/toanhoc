@@ -1,6 +1,6 @@
 {
-  "name": "Học Toán Vui Nhộn - Math Quest",
-  "description": "Một nền tảng trò chơi toán học tương tác dành cho trẻ từ 3-7 tuổi, bao gồm các bài tập đếm, cộng, trừ với giao diện sinh động và âm thanh vui nhộn.",
+  "name": "Toán Học Nhí - Học Mà Chơi",
+  "description": "Nền tảng học toán tương tác cho trẻ em 3-7 tuổi với công nghệ AI.",
   "requestFramePermissions": [
     "microphone"
   ]

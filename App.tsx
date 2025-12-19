@@ -4,10 +4,12 @@ import { GameConfig, GameType } from './types.ts';
 import { gameRegistry } from './data/game-registry.ts';
 import GameCard from './components/GameCard.tsx';
 import LevelSelector from './components/LevelSelector.tsx';
+import GameEngine from './components/GameEngine.tsx';
 
 const App: React.FC = () => {
   const [filter, setFilter] = useState<GameType | 'ALL'>('ALL');
   const [selectedGame, setSelectedGame] = useState<GameConfig | null>(null);
+  const [playingGame, setPlayingGame] = useState<{ config: GameConfig, levelIndex: number } | null>(null);
 
   const filteredGames = useMemo(() => {
     return filter === 'ALL' 
@@ -21,10 +23,22 @@ const App: React.FC = () => {
 
   const handleLevelSelect = (levelIndex: number) => {
     if (selectedGame) {
-      // Sử dụng đường dẫn tương đối thay vì bắt đầu bằng /
-      window.location.href = `games/${selectedGame.id}/index.html?level=${levelIndex}`;
+      // Thay vì chuyển trang gây lỗi 404, chúng ta set state để chơi ngay tại đây
+      setPlayingGame({ config: selectedGame, levelIndex });
+      setSelectedGame(null); // Đóng modal chọn level
     }
   };
+
+  // Nếu đang trong trận đấu, hiển thị GameEngine
+  if (playingGame) {
+    return (
+      <GameEngine 
+        config={playingGame.config} 
+        startLevelIndex={playingGame.levelIndex}
+        onExit={() => setPlayingGame(null)} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen pb-20 bg-sky-50">
