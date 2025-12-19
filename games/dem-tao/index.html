@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đếm Táo Đỏ - Math Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/core.css">
+</head>
+<body>
+    <div id="game-ui" class="game-container">
+        <div class="score-badge">ĐIỂM: <span id="score">0</span></div>
+        <button onclick="window.location.href='/index.html'" style="position:absolute; top:2rem; left:2rem; background:white; border:none; border-radius:1rem; padding:0.5rem 1rem; font-weight:900; cursor:pointer;">🏠</button>
+        
+        <h1 id="game-title" style="font-weight:900; color:#064e3b; margin-bottom:0.5rem;">Đang tải...</h1>
+        <p id="game-subtitle" style="font-weight:700; color:#374151; margin-bottom:2rem;"></p>
+
+        <div class="play-area">
+            <div id="feedback" class="feedback-overlay">🌟 GIỎI LẮM!</div>
+            <div id="items-container" class="items-grid"></div>
+            <div id="options-container" class="options-grid"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script type="module">
+        import { MathGameCore } from '../../core/game-core.js';
+        import { AudioCore } from '../../core/audio-core.js';
+
+        let game, audio, currentQuestion;
+
+        async function init() {
+            const res = await fetch('./game.json');
+            const config = await res.json();
+            
+            // Extract level from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const levelIdx = parseInt(urlParams.get('level')) || 0;
+            
+            game = new MathGameCore(config, levelIdx);
+            audio = new AudioCore();
+
+            document.getElementById('game-title').innerText = config.title;
+            const levelInfo = ` (Mức độ ${levelIdx + 1})`;
+            document.getElementById('game-subtitle').innerText = config.subtitle + levelInfo;
+
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            currentQuestion = game.generateQuestion();
+            renderQuestion();
+            if (game.config.tts) {
+                audio.speak(game.config.subtitle);
+            }
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+            
+            // Render items
+            for(let i=0; i<currentQuestion.a; i++) {
+                const el = document.createElement('span');
+                el.className = 'item-emoji';
+                el.innerText = game.config.itemEmoji;
+                el.style.animationDelay = `${i * 0.1}s`;
+                container.appendChild(el);
+            }
+
+            // Render options
+            const optionsBox = document.getElementById('options-container');
+            optionsBox.innerHTML = '';
+            currentQuestion.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(opt);
+                optionsBox.appendChild(btn);
+            });
+        }
+
+        async function handleAnswer(val) {
+            const isCorrect = game.checkAnswer(val, currentQuestion.answer);
+            const feedbackEl = document.getElementById('feedback');
+            
+            if (isCorrect) {
+                feedbackEl.innerText = "🌟 GIỎI LẮM!";
+                feedbackEl.className = "feedback-overlay active";
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                document.getElementById('score').innerText = game.score;
+                setTimeout(() => {
+                    feedbackEl.className = "feedback-overlay";
+                    nextQuestion();
+                }, 1500);
+            } else {
+                feedbackEl.innerText = "❌ THỬ LẠI NHÉ!";
+                feedbackEl.className = "feedback-overlay active wrong";
+                setTimeout(() => {
+                    feedbackEl.className = "feedback-overlay";
+                }, 1000);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
