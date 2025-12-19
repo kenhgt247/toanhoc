@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { GameConfig, GameType, LevelData } from '../types';
-import { themes } from '../data/themes';
+import { GameConfig, GameType } from '../types.ts';
+import { themes } from '../data/themes.ts';
+import { launchConfetti } from '../core/confetti.ts';
 
 interface GameEngineProps {
   config: GameConfig;
@@ -9,7 +10,7 @@ interface GameEngineProps {
 }
 
 const GameEngine: React.FC<GameEngineProps> = ({ config, onExit }) => {
-  const [currentLevel, setCurrentLevel] = useState(config.levels[0]);
+  const [currentLevel] = useState(config.levels[0]);
   const [question, setQuestion] = useState<{ a: number, b: number, type: GameType } | null>(null);
   const [options, setOptions] = useState<number[]>([]);
   const [score, setScore] = useState(0);
@@ -35,14 +36,13 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, onExit }) => {
 
     setQuestion({ a, b, type });
 
-    // Generate options
     const answer = type === GameType.COUNT ? a : (type === GameType.ADD ? a + b : a - b);
     const distractors = new Set<number>();
     distractors.add(answer);
     while (distractors.size < 4) {
-      const offset = Math.floor(Math.random() * 5) - 2; // -2 to +2
+      const offset = Math.floor(Math.random() * 5) - 2;
       const d = Math.max(0, answer + offset);
-      if (d !== answer || distractors.size === 1) distractors.add(d);
+      distractors.add(d);
     }
     setOptions(Array.from(distractors).sort((x, y) => x - y));
     setFeedback(null);
@@ -54,14 +54,12 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, onExit }) => {
 
   const handleAnswer = (val: number) => {
     if (!question) return;
-    const answer = question.type === GameType.COUNT ? question.a : (question.type === GameType.ADD ? question.a + question.a + question.b : question.a - question.b);
-    
-    // In our logic for ADD, we need to be careful. Let's recalculate answer correctly.
     const actualAnswer = question.type === GameType.COUNT ? question.a : (question.type === GameType.ADD ? question.a + question.b : question.a - question.b);
 
     if (val === actualAnswer) {
       setFeedback('correct');
       setScore(s => s + 10);
+      launchConfetti();
       setTimeout(() => {
         generateQuestion();
       }, 1500);
@@ -85,7 +83,6 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, onExit }) => {
       <div className="max-w-4xl w-full flex flex-col items-center">
         <h2 className={`text-4xl font-black mb-8 text-center ${theme.accent}`}>{config.title}</h2>
         
-        {/* Play Area */}
         <div className="bg-white rounded-[3rem] p-12 shadow-2xl w-full flex flex-col items-center relative overflow-hidden">
           {feedback === 'correct' && (
             <div className="absolute inset-0 z-10 bg-emerald-500/90 flex items-center justify-center animate-bounce">

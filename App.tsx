@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
-import { GameConfig, GameType } from './types';
-import { gameRegistry } from './data/game-registry';
-import GameCard from './components/GameCard';
-import LevelSelector from './components/LevelSelector';
+import { GameConfig, GameType } from './types.ts';
+import { gameRegistry } from './data/game-registry.ts';
+import GameCard from './components/GameCard.tsx';
+import LevelSelector from './components/LevelSelector.tsx';
 
 const App: React.FC = () => {
   const [filter, setFilter] = useState<GameType | 'ALL'>('ALL');
@@ -21,7 +21,8 @@ const App: React.FC = () => {
 
   const handleLevelSelect = (levelIndex: number) => {
     if (selectedGame) {
-      window.location.href = `/games/${selectedGame.id}/index.html?level=${levelIndex}`;
+      // Sử dụng đường dẫn tương đối thay vì bắt đầu bằng /
+      window.location.href = `games/${selectedGame.id}/index.html?level=${levelIndex}`;
     }
   };
 
