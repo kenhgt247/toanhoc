@@ -6,20 +6,17 @@ export class AudioCore {
     this.audioCtx = null;
     this.ai = null;
     this.isMuted = false;
-    this.init();
+    this.initAI();
   }
 
-  init() {
+  initAI() {
     try {
-      // Lazy init AudioContext to avoid browser policy issues before interaction
       const apiKey = window.process?.env?.API_KEY || "";
       if (apiKey) {
         this.ai = new GoogleGenAI({ apiKey });
-      } else {
-        console.warn("AudioCore: API_KEY not found in environment.");
       }
     } catch (e) {
-      console.error("AudioCore Init Error:", e);
+      console.error("AudioCore Init AI Error:", e);
     }
   }
 
@@ -36,10 +33,38 @@ export class AudioCore {
     this.isMuted = mute;
   }
 
+  // Tạo âm thanh bằng Oscillator (không cần file mp3)
   async playSfx(type) {
     if (this.isMuted) return;
-    console.log(`SFX: ${type}`);
-    // SFX logic can be added here
+    this.ensureAudioContext();
+    
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    const now = this.audioCtx.currentTime;
+
+    if (type === 'correct') {
+      // Âm thanh "tinh tinh" cao dần
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'wrong') {
+      // Âm thanh "tè tè" trầm
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
+    }
   }
 
   async speak(text) {

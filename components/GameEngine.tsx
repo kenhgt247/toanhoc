@@ -22,7 +22,6 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
   const theme = themes[config.theme];
   const currentLevel = config.levels[levelIdx] || config.levels[0];
   
-  // Khởi tạo AudioCore duy nhất một lần
   const audio = useMemo(() => new AudioCore(), []);
 
   useEffect(() => {
@@ -40,7 +39,7 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
       a = Math.floor(Math.random() * (max - min + 1)) + min;
       b = 0;
     } else if (type === GameType.ADD) {
-      a = Math.floor(Math.random() * (max - 1)) + 1;
+      a = Math.floor(Math.random() * (Math.floor(max/2))) + 1;
       b = Math.floor(Math.random() * (max - a)) + 1;
     } else if (type === GameType.SUB) {
       a = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -60,11 +59,10 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
     setOptions(Array.from(distractors).sort((x, y) => x - y));
     setFeedback(null);
 
-    // Phát âm thanh TTS cho câu hỏi
     if (config.tts && !isMuted) {
       let speechText = "";
       if (type === GameType.COUNT) {
-        speechText = `Bé hãy đếm xem có bao nhiêu ${config.theme === 'fruit' ? 'quả táo' : 'đồ vật'} nhé?`;
+        speechText = `Bé hãy đếm xem có bao nhiêu ${theme.itemImage} nhé?`;
       } else if (type === GameType.ADD) {
         speechText = `${a} cộng ${b} bằng mấy nhỉ?`;
       } else if (type === GameType.SUB) {
@@ -72,14 +70,16 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
       }
       audio.speak(speechText);
     }
-  }, [config, currentLevel, isMuted, audio]);
+  }, [config, currentLevel, isMuted, audio, theme.itemImage]);
 
   useEffect(() => {
     generateQuestion();
   }, [generateQuestion]);
 
   const handleAnswer = (val: number) => {
-    if (!question) return;
+    audio.ensureAudioContext(); // Đảm bảo audio context được kích hoạt khi chạm
+    if (!question || feedback) return;
+    
     const actualAnswer = question.type === GameType.COUNT ? question.a : (question.type === GameType.ADD ? question.a + question.b : question.a - question.b);
 
     if (val === actualAnswer) {
@@ -93,67 +93,75 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
     } else {
       setFeedback('wrong');
       audio.playSfx('wrong');
-      setTimeout(() => setFeedback(null), 1000);
+      setTimeout(() => setFeedback(null), 800);
     }
   };
 
   if (!question) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 ${theme.background}`}>
-      {/* HUD bar */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
+    <div className={`fixed inset-0 z-50 flex flex-col ${theme.background} overflow-hidden`}>
+      {/* HUD bar - Tối ưu cho mobile */}
+      <div className="p-3 md:p-4 flex justify-between items-center z-20 bg-white/50 backdrop-blur-sm">
         <div className="flex gap-2">
           <button 
             onClick={onExit} 
-            className="bg-white/90 hover:bg-white p-3 rounded-2xl shadow-lg text-2xl border-b-4 border-slate-200 active:border-0 active:translate-y-1 transition-all"
+            className="bg-white hover:bg-slate-50 p-2 md:p-3 rounded-xl shadow text-lg md:text-2xl border-b-4 border-slate-200 active:translate-y-1 transition-all"
           >
-            🏠 Thoát
+            🏠
           </button>
           <button 
             onClick={() => setIsMuted(!isMuted)} 
-            className="bg-white/90 hover:bg-white p-3 rounded-2xl shadow-lg text-2xl border-b-4 border-slate-200 active:border-0 active:translate-y-1 transition-all"
+            className="bg-white hover:bg-slate-50 p-2 md:p-3 rounded-xl shadow text-lg md:text-2xl border-b-4 border-slate-200 active:translate-y-1 transition-all"
           >
             {isMuted ? '🔇' : '🔊'}
           </button>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-white/90 px-6 py-2 rounded-2xl shadow-lg font-black text-emerald-600 border-b-4 border-slate-200 hidden md:block">
-            Cấp độ: {levelIdx + 1}
+        <div className="flex gap-2 md:gap-4">
+          <div className="bg-white/90 px-3 md:px-6 py-1 md:py-2 rounded-xl shadow-lg font-black text-emerald-600 border-b-4 border-slate-200 text-sm md:text-base">
+            Cấp: {levelIdx + 1}
           </div>
-          <div className="bg-white/90 px-6 py-2 rounded-2xl shadow-lg font-black text-orange-500 border-b-4 border-slate-200">
+          <div className="bg-white/90 px-3 md:px-6 py-1 md:py-2 rounded-xl shadow-lg font-black text-orange-500 border-b-4 border-slate-200 text-sm md:text-base">
             Điểm: {score}
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl w-full flex flex-col items-center">
-        <h2 className={`text-4xl font-black mb-6 text-center drop-shadow-sm ${theme.accent} game-font`}>{config.title}</h2>
-        
-        <div className="bg-white rounded-[3rem] p-6 md:p-12 shadow-2xl w-full flex flex-col items-center relative overflow-hidden border-8 border-white/50">
+      <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-6 overflow-y-auto">
+        <div className="w-full max-w-2xl bg-white rounded-[2rem] md:rounded-[3rem] p-4 md:p-8 shadow-2xl relative flex flex-col border-4 md:border-8 border-white/50">
+          
+          {/* Feedback Overlay */}
           {feedback === 'correct' && (
-            <div className="absolute inset-0 z-30 bg-emerald-500/95 flex items-center justify-center animate-in fade-in zoom-in duration-300">
+            <div className="absolute inset-0 z-30 bg-emerald-500/90 flex items-center justify-center rounded-[2rem] md:rounded-[3rem] animate-in fade-in zoom-in duration-300">
               <div className="text-center">
-                <span className="text-8xl block mb-4">🌟</span>
-                <span className="text-5xl font-black text-white uppercase tracking-widest">Giỏi Lắm!</span>
+                <span className="text-6xl md:text-8xl block mb-2">🌟</span>
+                <span className="text-3xl md:text-5xl font-black text-white uppercase">Giỏi Lắm!</span>
               </div>
             </div>
           )}
           {feedback === 'wrong' && (
-            <div className="absolute inset-0 z-30 bg-rose-500/95 flex items-center justify-center animate-in fade-in zoom-in duration-200">
+            <div className="absolute inset-0 z-30 bg-rose-500/90 flex items-center justify-center rounded-[2rem] md:rounded-[3rem] animate-in fade-in zoom-in duration-200">
               <div className="text-center">
-                <span className="text-8xl block mb-4">❌</span>
-                <span className="text-5xl font-black text-white uppercase tracking-widest">Thử Lại Nhé!</span>
+                <span className="text-6xl md:text-8xl block mb-2">❌</span>
+                <span className="text-3xl md:text-5xl font-black text-white uppercase">Thử Lại!</span>
               </div>
             </div>
           )}
 
-          {/* Question Visualization */}
-          <div className="flex flex-wrap justify-center items-center gap-8 mb-12 min-h-[180px] w-full bg-slate-50/50 rounded-[2rem] p-4">
+          {/* Question Display */}
+          <div className="text-center mb-4 md:mb-8">
+            <h2 className={`text-xl md:text-3xl font-black ${theme.accent} game-font`}>
+              {question.type === GameType.COUNT ? 'Bé hãy đếm nhé!' : 
+               question.type === GameType.ADD ? 'Phép tính cộng' : 'Phép tính trừ'}
+            </h2>
+          </div>
+
+          {/* Items Grid - Tự động co giãn cho mobile */}
+          <div className="flex-1 flex items-center justify-center min-h-[140px] md:min-h-[220px] bg-slate-50/50 rounded-2xl md:rounded-[2rem] p-3 md:p-6 mb-6">
             {question.type === GameType.COUNT && (
-              <div className="flex flex-wrap justify-center gap-4 max-w-2xl">
+              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 md:gap-4">
                 {Array.from({ length: question.a }).map((_, i) => (
-                  <span key={i} className="text-6xl md:text-8xl floating" style={{ animationDelay: `${i * 0.1}s` }}>
+                  <span key={i} className="text-4xl md:text-6xl floating" style={{ animationDelay: `${i * 0.1}s` }}>
                     {theme.itemImage}
                   </span>
                 ))}
@@ -161,46 +169,46 @@ const GameEngine: React.FC<GameEngineProps> = ({ config, startLevelIndex = 0, on
             )}
             
             {question.type === GameType.ADD && (
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="flex flex-wrap justify-center gap-3 max-w-[200px] bg-white p-6 rounded-3xl shadow-inner border-2 border-slate-100">
-                   {Array.from({ length: question.a }).map((_, i) => <span key={i} className="text-5xl">{theme.itemImage}</span>)}
+              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6">
+                <div className="flex flex-wrap justify-center gap-1 md:gap-2 max-w-[120px] md:max-w-[180px]">
+                   {Array.from({ length: question.a }).map((_, i) => <span key={i} className="text-3xl md:text-5xl">{theme.itemImage}</span>)}
                 </div>
-                <span className="text-7xl font-black text-slate-300">+</span>
-                <div className="flex flex-wrap justify-center gap-3 max-w-[200px] bg-white p-6 rounded-3xl shadow-inner border-2 border-slate-100">
-                   {Array.from({ length: question.b }).map((_, i) => <span key={i} className="text-5xl">{theme.itemImage}</span>)}
+                <span className="text-4xl md:text-6xl font-black text-slate-300">+</span>
+                <div className="flex flex-wrap justify-center gap-1 md:gap-2 max-w-[120px] md:max-w-[180px]">
+                   {Array.from({ length: question.b }).map((_, i) => <span key={i} className="text-3xl md:text-5xl">{theme.itemImage}</span>)}
                 </div>
               </div>
             )}
 
             {question.type === GameType.SUB && (
-              <div className="flex items-center justify-center w-full">
-                <div className="flex flex-wrap justify-center gap-4 max-w-3xl bg-white p-8 rounded-[3rem] shadow-inner border-2 border-slate-100">
-                   {Array.from({ length: question.a }).map((_, i) => (
-                     <span key={i} className={`text-6xl md:text-7xl transition-all duration-500 ${i >= (question.a - question.b) ? 'opacity-10 scale-75 grayscale blur-[1px]' : 'floating'}`}>
-                       {theme.itemImage}
-                     </span>
-                   ))}
-                </div>
+              <div className="flex flex-wrap justify-center gap-2 md:gap-4 max-w-full">
+                 {Array.from({ length: question.a }).map((_, i) => (
+                   <span key={i} className={`text-4xl md:text-6xl transition-all duration-500 ${i >= (question.a - question.b) ? 'opacity-10 scale-50 grayscale blur-[1px]' : 'floating'}`}>
+                     {theme.itemImage}
+                   </span>
+                 ))}
               </div>
             )}
           </div>
 
-          {/* Answer Options */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+          {/* Answer Buttons - To và dễ bấm */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {options.map((opt) => (
               <button
                 key={opt}
                 onClick={() => handleAnswer(opt)}
-                className="bg-slate-100 hover:bg-emerald-50 hover:scale-105 active:scale-95 border-b-[12px] border-slate-200 hover:border-emerald-400 transition-all py-8 rounded-[2rem] text-6xl font-black text-slate-700 hover:text-emerald-600 shadow-sm"
+                style={{ touchAction: 'manipulation' }}
+                className="bg-slate-100 hover:bg-emerald-50 active:scale-95 border-b-8 md:border-b-[12px] border-slate-200 hover:border-emerald-400 transition-all py-4 md:py-8 rounded-xl md:rounded-[2rem] text-4xl md:text-6xl font-black text-slate-700 shadow-sm"
               >
                 {opt}
               </button>
             ))}
           </div>
         </div>
-
-        <p className="mt-8 text-xl md:text-2xl text-slate-600 font-black bg-white/70 backdrop-blur-sm px-8 py-3 rounded-full shadow-sm italic border-2 border-white text-center">
-          "{config.subtitle}"
+        
+        {/* Caption */}
+        <p className="mt-4 md:mt-8 text-sm md:text-xl text-slate-500 font-bold bg-white/50 px-4 md:px-8 py-2 md:py-3 rounded-full text-center">
+          {config.subtitle}
         </p>
       </div>
     </div>
