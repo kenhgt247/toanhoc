@@ -20,7 +20,7 @@ export interface GameConfig {
   type: GameType;
   levels: LevelData[];
   icon: string;
-  theme: 'fruit' | 'animal' | 'space' | 'candy';
+  theme: 'fruit' | 'animal' | 'space' | 'candy' | 'underwater' | 'farm';
   tts: boolean;
 }
 

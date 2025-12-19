@@ -29,5 +29,19 @@ export const themes: Record<string, ThemeConfig> = {
     secondary: 'bg-pink-100',
     accent: 'text-purple-500',
     itemImage: '🍭'
+  },
+  underwater: {
+    background: 'bg-cyan-50',
+    primary: 'bg-blue-500',
+    secondary: 'bg-cyan-100',
+    accent: 'text-blue-700',
+    itemImage: '🐠'
+  },
+  farm: {
+    background: 'bg-yellow-50',
+    primary: 'bg-orange-500',
+    secondary: 'bg-yellow-100',
+    accent: 'text-red-700',
+    itemImage: '🐥'
   }
 };
